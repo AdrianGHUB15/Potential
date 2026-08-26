@@ -1417,14 +1417,13 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
                 int correction_adj = (abs(correction_value) * SE_CORRECTION_MULT) / SE_CORRECTION_DIVISOR;
 
                 // Double Extension                
-                /*int doubleMargin = DOUBLE_EXTENSION_MARGIN - (moveHistory / 512) - (pawnHistoryValue / 384) - (corrplexity_value / 16);
+                int doubleMargin = DOUBLE_EXTENSION_MARGIN - (moveHistory / 512) - (pawnHistoryValue / 384) - (corrplexity_value / 16);
                 doubleMargin -= correction_adj;
                 doubleMargin += isCapture * 75;
                 doubleMargin += isPromotion * 0; 
                 doubleMargin += tactical * 40;
-                doubleMargin -= ss->singular_ply * 25;*/
+                doubleMargin -= ss->singular_ply * 25;
 
-                int doubleMargin = DOUBLE_EXTENSION_MARGIN;
                 if (!pvNode && singularScore <= singularBeta - doubleMargin) {
                     extensions++;
                 }                

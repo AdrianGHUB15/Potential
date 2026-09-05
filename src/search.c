@@ -1193,30 +1193,8 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
     }
 
     // razoring
-    const int razoring_margin = RAZORING_MARGIN * depth;
-    if (!ss->singular_move && !pvNode && !in_check && depth <= RAZORING_DEPTH && ttAdjustedEval + razoring_margin <= alpha && tt_flag != hashFlagAlpha) {
-        
-        const bool allow_full_razor = depth == 1 ||
-            (depth <= RAZORING_FULL_D && ttAdjustedEval + razoring_margin + RAZORING_FULL_MARGIN <= alpha);
-
-        if (allow_full_razor) {
-            return quiescence(alpha, beta, t, time, ss);
-        }
-
-        const int capped_alpha = myMAX(alpha - razoring_margin, -mateValue);
-        const int razor_alpha = capped_alpha;
-        const int razor_beta = razor_alpha + 1;
-        int razor_score = quiescence(razor_alpha, razor_beta, t, time, ss);
-
-        // We proved a fail low.
-        if (razor_score <= razor_alpha) {                       
-            return razor_score;
-        }
-
-        if (razor_score >= razor_beta + RAZORING_VERIFY_MARGIN && depth <= RAZORING_VERIFY_D) {                    
-            depth -= myMIN(RAZORING_TRIM, depth - 1);
-        }
-    }
+    if (!ss->singular_move && !pvNode && !in_check && ttAdjustedEval <= alpha - 300 * depth)
+        return quiescence(alpha, beta, t, time, ss);
 
     // moves seen counter
     int moves_seen = 0;

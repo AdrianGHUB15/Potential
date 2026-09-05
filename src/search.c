@@ -188,9 +188,6 @@
   /*╔══════════╗
     ║ Razoring ║
     ╚══════════╝*/
-  TUNE_INT RAZORING_DEPTH = 3;
-  TUNE_INT RAZORING_FULL_MARGIN = 202;    
-  TUNE_INT RAZORING_VERIFY_MARGIN = 124;
   
   extern TUNE_DOUBLE TM_BEST_MOVE_SCALE_0;
   extern TUNE_DOUBLE TM_BEST_MOVE_SCALE_1;
@@ -208,11 +205,8 @@
   extern TUNE_DOUBLE TM_NODE_FRACTION_BASE;
   extern TUNE_DOUBLE TM_NODE_MULTIPLIER;
   extern TUNE_DOUBLE TM_NODE_MIN_MULTIPLIER;
-  TUNE_INT RAZORING_TRIM = 1;
-  TUNE_INT RAZORING_FULL_D = 2;
-  TUNE_INT RAZORING_VERIFY_D = 3;
-  TUNE_INT RAZORING_MARGIN = 115;
-  
+
+  TUNE_INT RAZORING_ALPHA_REDUCTION = 300;
   
   /*╔═════════════════════╗
     ║ Singular Extensions ║
@@ -1193,7 +1187,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
     }
 
     // razoring
-    if (!ss->singular_move && !pvNode && !in_check && ttAdjustedEval <= alpha - 300 * depth)
+    if (!ss->singular_move && !pvNode && !in_check && ttAdjustedEval <= alpha - RAZORING_ALPHA_REDUCTION * depth * depth)
         return quiescence(alpha, beta, t, time, ss);
 
     // moves seen counter

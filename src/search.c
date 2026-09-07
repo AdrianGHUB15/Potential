@@ -183,8 +183,9 @@
   TUNE_INT RFP_TT_PV_DEPTH_WEIGHT = 993;
   TUNE_INT RFP_QUAD_MULT = 6176;
   TUNE_INT RFP_QUAD_DIVISOR = 1044;
-  
-  
+  TUNE_INT NMP_TTEVAL_MULT = 512;
+  TUNE_INT NMP_BETA_MULT = 512;
+
   /*╔══════════╗
     ║ Razoring ║
     ╚══════════╝*/
@@ -1065,11 +1066,6 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
 
     improving = !in_check && (ss - 2)->staticEval != noEval && ss->staticEval > (ss - 2)->staticEval;
 
-    // Internal Iterative Reductions
-    if ((pvNode || predicted_cut_node) && depth >= IIR_DEPTH && (!tt_move || tt_depth < depth - IIR_TT_DEPTH_SUBTRACTOR)) {
-        depth--;
-    }
-
     int ttAdjustedEval = static_eval;
 
     if (!ss->singular_move && tt_move && !in_check &&
@@ -1082,6 +1078,31 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
 
     improving |= ss->staticEval >= beta + IMPROVING_FAIL_HIGH_MARGIN;
 
+    // razoring
+    const int razoring_margin = RAZORING_MARGIN * depth;
+    if (!ss->singular_move && !pvNode && !in_check && depth <= RAZORING_DEPTH && ttAdjustedEval + razoring_margin <= alpha && tt_flag != hashFlagAlpha) {
+        
+        const bool allow_full_razor = depth == 1 ||
+            (depth <= RAZORING_FULL_D && ttAdjustedEval + razoring_margin + RAZORING_FULL_MARGIN <= alpha);
+
+        if (allow_full_razor) {
+            return quiescence(alpha, beta, t, time, ss);
+        }
+
+        const int capped_alpha = myMAX(alpha - razoring_margin, -mateValue);
+        const int razor_alpha = capped_alpha;
+        const int razor_beta = razor_alpha + 1;
+        int razor_score = quiescence(razor_alpha, razor_beta, t, time, ss);
+
+        // We proved a fail low.
+        if (razor_score <= razor_alpha) {                       
+            return razor_score;
+        }
+
+        if (razor_score >= razor_beta + RAZORING_VERIFY_MARGIN && depth <= RAZORING_VERIFY_D) {                    
+            depth -= myMIN(RAZORING_TRIM, depth - 1);
+        }
+    }
     uint16_t rfpMargin = improving ? RFP_IMPROVING_MARGIN * (depth - 1) : RFP_MARGIN * depth;
 
     rfpMargin += (RFP_QUAD_MULT * depth * depth) / RFP_QUAD_DIVISOR;
@@ -1092,13 +1113,13 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
     if (!ss->singular_move && rfp_tt_pv_decision &&
         depth <= RFP_DEPTH && !pvNode && !in_check && (!tt_hit || ttAdjustedEval != static_eval) &&
         ttAdjustedEval - rfpMargin >= beta + (corrplexity * RFP_CORRPLEXITY_MULT) / RFP_CORRPLEXITY_DIVISOR)
-        return (ttAdjustedEval + beta) / 2;
+        return (ttAdjustedEval * NMP_TTEVAL_MULT + beta * NMP_BETA_MULT) / 1024;
 
     // Null Move Pruning
     if (!ss->singular_move && depth >= NMP_DEPTH && !in_check && !rootNode &&
-            ttAdjustedEval >= beta + NMP_EVAL_BETA_MARGIN &&
-            pos->ply >= pos->nmpPly &&
-            !justPawns(pos) &&
+        ttAdjustedEval >= beta + NMP_EVAL_BETA_MARGIN &&
+        pos->ply >= pos->nmpPly &&
+        !justPawns(pos) &&
         !(tt_flag == hashFlagBeta && tt_move && getMoveCapture(tt_move) && isValuable(pos->mailbox[getMoveTarget(tt_move)]))) {
         struct copyposition copyPosition;
         // preserve board state
@@ -1128,7 +1149,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
 
         int R = (NMP_BASE_REDUCTION + depth * NMP_DEPTH_MULTIPLIER) * NMP_REDUCTION_DEPTH_MULT / NMP_REDUCTION_DIVISOR;
 
-        R += myMIN(((ttAdjustedEval - beta) * NMP_EVAL_MULT) / NMP_EVAL_DIVISOR, NMP_EVAL_MAX_REDUCTION);        
+        R += myMIN(((ttAdjustedEval - beta) * NMP_EVAL_MULT) / NMP_EVAL_DIVISOR, NMP_EVAL_MAX_REDUCTION);
 
         /* search moves with reduced depth to find beta cutoffs
            depth - R where R is a reduction limit */
@@ -1165,7 +1186,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
                 ss->piece = 0;
                 return score;
             }
-                
+
             pos->nmpPly = pos->ply + (depth - R) * 2 / 2;
             int verificationScore = -negamax(beta - 1, beta, depth - R, t, time, ss, false);
             pos->nmpPly = 0;
@@ -1192,35 +1213,15 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
         }
     }
 
-    // razoring
-    const int razoring_margin = RAZORING_MARGIN * depth;
-    if (!ss->singular_move && !pvNode && !in_check && depth <= RAZORING_DEPTH && ttAdjustedEval + razoring_margin <= alpha && tt_flag != hashFlagAlpha) {
-        
-        const bool allow_full_razor = depth == 1 ||
-            (depth <= RAZORING_FULL_D && ttAdjustedEval + razoring_margin + RAZORING_FULL_MARGIN <= alpha);
-
-        if (allow_full_razor) {
-            return quiescence(alpha, beta, t, time, ss);
-        }
-
-        const int capped_alpha = myMAX(alpha - razoring_margin, -mateValue);
-        const int razor_alpha = capped_alpha;
-        const int razor_beta = razor_alpha + 1;
-        int razor_score = quiescence(razor_alpha, razor_beta, t, time, ss);
-
-        // We proved a fail low.
-        if (razor_score <= razor_alpha) {                       
-            return razor_score;
-        }
-
-        if (razor_score >= razor_beta + RAZORING_VERIFY_MARGIN && depth <= RAZORING_VERIFY_D) {                    
-            depth -= myMIN(RAZORING_TRIM, depth - 1);
-        }
+    // Internal Iterative Reductions
+    if ((pvNode || predicted_cut_node) && depth >= IIR_DEPTH && (!tt_move || tt_depth < depth - IIR_TT_DEPTH_SUBTRACTOR)) {
+        depth--;
     }
 
     // moves seen counter
     int moves_seen = 0;
 
+    // ProbCut
     int probcut_beta = beta + PROBCUT_BETA_MARGIN - PROBCUT_IMPROVING_MARGIN * improving;
     if (!pvNode && !in_check && depth >= PROBCUT_DEPTH && abs(beta) < mateValue  && !ss->singular_move &&
         (!tt_hit || tt_depth + 3 < depth || tt_score >= probcut_beta)) {

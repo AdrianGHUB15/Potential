@@ -52,19 +52,17 @@
     ║ Null Move Pruning     ║
     ╚═══════════════════════╝*/
   TUNE_INT NMP_DEPTH = 3;  
-  TUNE_INT NMP_BASE_REDUCTION = 5060;
-  TUNE_INT NMP_DEPTH_MULTIPLIER = 268;
-  TUNE_INT NMP_REDUCTION_DEPTH_MULT = 8804;
+  TUNE_INT NMP_BASE_REDUCTION = 7;
+  TUNE_INT NMP_DEPTH_MULTIPLIER = 3;
   TUNE_INT NMP_EVAL_MULT = 147;
   TUNE_INT NMP_FAILED_HIGH_HIST_BASE = 94;
   TUNE_INT NMP_FAILED_HIGH_HIST_MULT = 29953;
   TUNE_INT NMP_FAILED_HIGH_HIST_DIVISOR = 606;
   TUNE_INT NMP_EVAL_BETA_MARGIN = 93;
   TUNE_INT NMP_VERIFICATION_MARGIN = 25;
-  TUNE_INT NMP_REDUCTION_DIVISOR = 8983655;
   TUNE_INT NMP_EVAL_DIVISOR = 37682;
   TUNE_INT NMP_EVAL_MAX_REDUCTION = 3;
-  
+  TUNE_INT NMP_R_INC_DIVISOR = 256;
   /*╔═══════════════════════╗
     ║ Late Move Reduction   ║
     ╚═══════════════════════╝*/
@@ -1126,9 +1124,9 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
 
         prefetch_corrhist(pos, t);
 
-        int R = (NMP_BASE_REDUCTION + depth * NMP_DEPTH_MULTIPLIER) * NMP_REDUCTION_DEPTH_MULT / NMP_REDUCTION_DIVISOR;
+        int R = (NMP_BASE_REDUCTION + depth * NMP_DEPTH_MULTIPLIER);
 
-        R += myMIN(((ttAdjustedEval - beta) * NMP_EVAL_MULT) / NMP_EVAL_DIVISOR, NMP_EVAL_MAX_REDUCTION);        
+        R += myMIN((ttAdjustedEval - beta) / NMP_R_INC_DIVISOR, NMP_EVAL_MAX_REDUCTION);        
 
         /* search moves with reduced depth to find beta cutoffs
            depth - R where R is a reduction limit */

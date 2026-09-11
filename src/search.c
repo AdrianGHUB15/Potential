@@ -1123,7 +1123,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
 
         prefetch_corrhist(pos, t);
 
-        int R = (NMP_BASE_REDUCTION + depth * NMP_DEPTH_MULTIPLIER);
+        int R = NMP_BASE_REDUCTION + (depth * NMP_DEPTH_MULTIPLIER);
 
         R += myMIN((ttAdjustedEval - beta) / NMP_R_INC_DIVISOR, NMP_EVAL_MAX_REDUCTION);        
 

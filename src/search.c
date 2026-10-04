@@ -954,7 +954,10 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
     if (pos->ply > pos->seldepth) {
         pos->seldepth = pos->ply;
     }
-
+    // recursion escapre condition
+    if (depth <= 0)
+        // run quiescence search
+        return quiescence(alpha, beta, t, time, ss);
 
     // variable to store current move's score (from the static evaluation perspective)
     int score = 0;
@@ -1034,11 +1037,6 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
             }
         }
     }
-
-    // recursion escapre condition
-    if (depth <= 0)
-        // run quiescence search
-        return quiescence(alpha, beta, t, time, ss);        
     
 
     // get static evaluation score

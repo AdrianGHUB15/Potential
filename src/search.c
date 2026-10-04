@@ -204,7 +204,7 @@
   extern TUNE_DOUBLE TM_NODE_FRACTION_BASE;
   extern TUNE_DOUBLE TM_NODE_MULTIPLIER;
   extern TUNE_DOUBLE TM_NODE_MIN_MULTIPLIER;
-  TUNE_INT RAZORING_ALPHA_REDUCTION = 300;
+  TUNE_INT RAZORING_ALPHA_REDUCTION = 400;
   
   /*╔═════════════════════╗
     ║ Singular Extensions ║
@@ -1185,7 +1185,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
     }
 
     // razoring
-    if (!ss->singular_move && !pvNode && !in_check && ttAdjustedEval <= alpha - RAZORING_ALPHA_REDUCTION * depth * depth && tt_flag != hashFlagAlpha)
+    if (!ss->singular_move && !pvNode && !in_check && ttAdjustedEval <= alpha - RAZORING_ALPHA_REDUCTION * depth && tt_flag != hashFlagAlpha)
         return quiescence(alpha, beta, t, time, ss);
 
     // moves seen counter

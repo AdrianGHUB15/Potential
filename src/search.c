@@ -1087,7 +1087,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
         return (ttAdjustedEval + beta) / 2;
 
     // Null Move Pruning
-    if (!ss->singular_move && depth >= NMP_DEPTH && !in_check && !rootNode &&
+    if (predicted_cut_node && !ss->singular_move && depth >= NMP_DEPTH && !in_check && !rootNode &&
             ttAdjustedEval >= beta + NMP_EVAL_BETA_MARGIN &&
             pos->ply >= pos->nmpPly &&
             !justPawns(pos) &&
@@ -1124,7 +1124,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
 
         /* search moves with reduced depth to find beta cutoffs
            depth - R where R is a reduction limit */
-        score = -negamax(-beta, -beta + 1, depth - R, t, time, ss + 1, !predicted_cut_node);
+        score = -negamax(-beta, -beta + 1, depth - R, t, time, ss + 1, predicted_cut_node);
 
         // decrement ply
         pos->ply--;
@@ -1159,7 +1159,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
             }
                 
             pos->nmpPly = pos->ply + (depth - R) * 2 / 2;
-            int verificationScore = -negamax(beta - 1, beta, depth - R, t, time, ss, false);
+            int verificationScore = -negamax(beta - 1, beta, depth - R, t, time, ss, predicted_cut_node);
             pos->nmpPly = 0;
 
             if (verificationScore >= beta) {

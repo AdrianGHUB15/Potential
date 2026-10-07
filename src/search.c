@@ -183,7 +183,8 @@
   TUNE_INT RFP_TT_PV_DEPTH_WEIGHT = 993;
   TUNE_INT RFP_QUAD_MULT = 6176;
   TUNE_INT RFP_QUAD_DIVISOR = 1044;
-  
+  TUNE_INT RFP_BETA_MULT = 600;
+  TUNE_INT RFP_TTEVAL_MULT = 300;
   
   /*╔══════════╗
     ║ Razoring ║
@@ -1084,7 +1085,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
     if (!ss->singular_move && rfp_tt_pv_decision &&
         depth <= RFP_DEPTH && !pvNode && !in_check && (!tt_hit || ttAdjustedEval != static_eval) &&
         ttAdjustedEval - rfpMargin >= beta + (corrplexity * RFP_CORRPLEXITY_MULT) / RFP_CORRPLEXITY_DIVISOR)
-        return (ttAdjustedEval + beta) / 2;
+        return (beta * RFP_BETA_MULT + ttAdjustedEval * RFP_TTEVAL_MULT) / 1024;
 
     // Null Move Pruning
     if (!ss->singular_move && depth >= NMP_DEPTH && !in_check && !rootNode &&

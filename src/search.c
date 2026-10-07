@@ -965,6 +965,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
     int pvNode = beta - alpha > 1;
     int rootNode = pos->ply == 0;
     int allNode = (!pvNode || !predicted_cut_node)
+
     uint16_t bestMove = 0;
     uint64_t pos_key = 0;
     uint16_t tt_move = 0;

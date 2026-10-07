@@ -1082,7 +1082,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
 
     // Reverse Futility Pruning
     if (!ss->singular_move && rfp_tt_pv_decision &&
-        depth <= RFP_DEPTH && !pvNode && !in_check && (!tt_hit || ttAdjustedEval != static_eval) &&
+        depth <= RFP_DEPTH && predicted_cut_node && !in_check && (!tt_hit || ttAdjustedEval != static_eval) &&
         ttAdjustedEval - rfpMargin >= beta + (corrplexity * RFP_CORRPLEXITY_MULT) / RFP_CORRPLEXITY_DIVISOR)
         return (ttAdjustedEval + beta) / 2;
 

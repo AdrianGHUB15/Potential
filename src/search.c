@@ -59,12 +59,14 @@
   TUNE_INT NMP_FAILED_HIGH_HIST_BASE = 94;
   TUNE_INT NMP_FAILED_HIGH_HIST_MULT = 29953;
   TUNE_INT NMP_FAILED_HIGH_HIST_DIVISOR = 606;
-  TUNE_INT NMP_EVAL_BETA_MARGIN = 93;
+  TUNE_INT NMP_BETA_DEPTH_SUB = 15;
   TUNE_INT NMP_VERIFICATION_MARGIN = 25;
   TUNE_INT NMP_REDUCTION_DIVISOR = 8983655;
   TUNE_INT NMP_EVAL_DIVISOR = 37682;
   TUNE_INT NMP_EVAL_MAX_REDUCTION = 3;
-  
+  TUNE_INT NMP_BETA_IMPROVING_SUB = 50;
+  TUNE_INT NMP_TOTAL_ADDER = 350;
+
   /*╔═══════════════════════╗
     ║ Late Move Reduction   ║
     ╚═══════════════════════╝*/
@@ -1088,7 +1090,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
 
     // Null Move Pruning
     if (!ss->singular_move && depth >= NMP_DEPTH && !in_check && !rootNode &&
-            ttAdjustedEval >= beta + NMP_EVAL_BETA_MARGIN &&
+            ttAdjustedEval >= beta - NMP_BETA_DEPTH_SUB * depth - NMP_BETA_IMPROVING_SUB * improving + NMP_TOTAL_ADDER &&
             pos->ply >= pos->nmpPly &&
             !justPawns(pos) &&
         !(tt_flag == hashFlagBeta && tt_move && getMoveCapture(tt_move) && isValuable(pos->mailbox[getMoveTarget(tt_move)]))) {

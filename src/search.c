@@ -64,7 +64,8 @@
   TUNE_INT NMP_REDUCTION_DIVISOR = 8983655;
   TUNE_INT NMP_EVAL_DIVISOR = 37682;
   TUNE_INT NMP_EVAL_MAX_REDUCTION = 3;
-  
+  TUNE_INT NMP_DEPTH_SUB_MULTIPLIER = 15;
+
   /*╔═══════════════════════╗
     ║ Late Move Reduction   ║
     ╚═══════════════════════╝*/
@@ -1088,7 +1089,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
 
     // Null Move Pruning
     if (!ss->singular_move && depth >= NMP_DEPTH && !in_check && !rootNode &&
-            ttAdjustedEval >= beta + NMP_EVAL_BETA_MARGIN &&
+            ttAdjustedEval >= beta - NMP_DEPTH_SUB_MULTIPLIER * depth + NMP_EVAL_BETA_MARGIN &&
             pos->ply >= pos->nmpPly &&
             !justPawns(pos) &&
         !(tt_flag == hashFlagBeta && tt_move && getMoveCapture(tt_move) && isValuable(pos->mailbox[getMoveTarget(tt_move)]))) {

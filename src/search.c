@@ -1079,8 +1079,6 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
         ttAdjustedEval = tt_score;
     }
 
-    improving |= ss->staticEval >= beta + IMPROVING_FAIL_HIGH_MARGIN;
-
     uint16_t rfpMargin = improving ? RFP_IMPROVING_MARGIN * (depth - 1) : RFP_MARGIN * depth;
 
     rfpMargin += (RFP_QUAD_MULT * depth * depth) / RFP_QUAD_DIVISOR;
@@ -1194,6 +1192,8 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
     // razoring
     if (!ss->singular_move && !pvNode && !in_check && ttAdjustedEval <= alpha - RAZORING_ALPHA_REDUCTION * depth * depth && tt_flag != hashFlagAlpha)
         return quiescence(alpha, beta, t, time, ss);
+
+    improving |= ss->staticEval >= beta + IMPROVING_FAIL_HIGH_MARGIN;
 
     // moves seen counter
     int moves_seen = 0;

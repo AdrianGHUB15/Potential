@@ -218,7 +218,10 @@
   TUNE_INT LDSE_CORRECTION_DIVISOR = 98376;
   TUNE_INT SE_TT_DEPTH_SUBTRACTOR = 3;
   // Positive Extensions
-  TUNE_INT DOUBLE_EXTENSION_MARGIN = -31;
+  TUNE_INT INITIAL_DOUBLE_EXT_OFFSET = -10;
+  TUNE_INT PV_NODE_ADD_DOUBLE_EXT = 200;
+  TUNE_INT TT_CAPTURE_REMOVAL_DOUBLE_EXT = 150;
+  TUNE_INT PLY_ROOTDEPTH_COMPARISON_MULT = 40;
   TUNE_INT TRIPLE_EXTENSION_MARGIN = 54;
   TUNE_INT QUADRUPLE_EXTENSION_MARGIN = 97;
   TUNE_INT MULTI_LOW_DEPTH_EXT_MARGIN = -13;
@@ -1422,7 +1425,6 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
 
             // Singular Extension
             if (singularScore < singularBeta) {
-                extensions++;
 
                 int correction_adj = (abs(correction_value) * SE_CORRECTION_MULT) / SE_CORRECTION_DIVISOR;
 
@@ -1433,21 +1435,15 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
                 doubleMargin += isPromotion * 0; 
                 doubleMargin += tactical * 40;*/
 
-                int doubleMargin = DOUBLE_EXTENSION_MARGIN;
-                if (!pvNode && singularScore <= singularBeta - doubleMargin) {
-                    extensions++;
-                }                
+                int doubleMargin = INITIAL_DOUBLE_EXT_OFFSET + PV_NODE_ADD_DOUBLE_EXT * pvNode - 
+                                   TT_CAPTURE_REMOVAL_DOUBLE_EXT * !tt_capture - correction_adj -
+                                   (pos->ply > pos->rootDepth) * PLY_ROOTDEPTH_COMPARISON_MULT;
 
                 // Triple Extension
                 int tripleMargin = TRIPLE_EXTENSION_MARGIN + TRIPLE_EXT_NOISY_BONUS * !notTactical;
                 tripleMargin -= ((moveHistory * TRIPLE_EXT_HIST_MULT) / TRIPLE_EXT_HIST_DIVISOR * notTactical);
                 tripleMargin -= correction_adj;
                 tripleMargin -= !tt_capture * TRIPLE_EXT_QUIET_TT_BONUS;
-                
-
-                if (singularScore <= singularBeta - tripleMargin) {
-                    extensions++;
-                }
                 
                 // ╔═══════════════════════════╗
                 // ║            /\             ║
@@ -1464,9 +1460,9 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
                 // ~~~~ Quadruple Extension ~~~~ //
                 int quadrupleMargin = QUADRUPLE_EXTENSION_MARGIN + QUADRUPLE_EXT_NOISY_BONUS * !notTactical;
 
-                if (singularScore <= singularBeta - quadrupleMargin) {
-                    extensions++;
-                }
+                extensions += 1 + (!pvNode && singularScore <= singularBeta - doubleMargin) +
+                    (singularScore <= singularBeta - tripleMargin)
+                    (singularScore <= singularBeta - quadrupleMargin);
             }
 
             // Multicut
@@ -1475,7 +1471,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
             }
 
             // Negative Extensions
-            else if (tt_score >= beta) {
+            else if (tt_score >= beta || predicted_cut_node) {
                 extensions -= 2 + !pvNode;
             }
 
@@ -1495,12 +1491,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
 
             // ~~~~ Recapture Extension ~~~~ //
             else if (pvNode && !notTactical && getMoveTarget(tt_move) == previous_move_target_square) {
-                extensions += 1;
-            }
-            
-            // Cut Node Extension
-            else if (predicted_cut_node) {
-                extensions -= 2;
+                extensions++;
             }
         } 
         // Low Depth Singular Extensions        

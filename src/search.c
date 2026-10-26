@@ -1460,9 +1460,10 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
                 // ~~~~ Quadruple Extension ~~~~ //
                 int quadrupleMargin = QUADRUPLE_EXTENSION_MARGIN + QUADRUPLE_EXT_NOISY_BONUS * !notTactical;
 
-                extensions += 1 + (!pvNode && singularScore <= singularBeta - doubleMargin) +
-                    (singularScore <= singularBeta - tripleMargin)
-                    (singularScore <= singularBeta - quadrupleMargin);
+                extensions += 1;
+                extensions += (!pvNode && singularScore <= singularBeta - doubleMargin);
+                extensions += (singularScore <= singularBeta - tripleMargin);
+                extensions += (singularScore <= singularBeta - quadrupleMargin);
             }
 
             // Multicut

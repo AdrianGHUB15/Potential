@@ -1178,6 +1178,8 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
 
         // Refutation, our opponent has an argument
         if (score < beta) {
+            depth++;
+
             // store null move refutation move
             ss->nmp_refutation_move = ss->move;
 

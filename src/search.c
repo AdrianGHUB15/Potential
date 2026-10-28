@@ -218,7 +218,7 @@
   TUNE_INT LDSE_CORRECTION_DIVISOR = 98376;
   TUNE_INT SE_TT_DEPTH_SUBTRACTOR = 3;
   // Positive Extensions
-  TUNE_INT DOUBLE_EXTENSION_MARGIN = -31;
+  TUNE_INT DOUBLE_EXTENSION_MARGIN = 50;
   TUNE_INT TRIPLE_EXTENSION_MARGIN = 54;
   TUNE_INT QUADRUPLE_EXTENSION_MARGIN = 97;
   TUNE_INT MULTI_LOW_DEPTH_EXT_MARGIN = -13;
@@ -1444,7 +1444,7 @@ int negamax(int alpha, int beta, int depth, ThreadData *t, my_time* time, Search
                 doubleMargin += isPromotion * 0; 
                 doubleMargin += tactical * 40;*/
 
-                int doubleMargin = DOUBLE_EXTENSION_MARGIN;
+                int doubleMargin = DOUBLE_EXTENSION_MARGIN - correction_adj;
                 if (!pvNode && singularScore <= singularBeta - doubleMargin) {
                     extensions++;
                 }                
